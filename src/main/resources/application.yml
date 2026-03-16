@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: Mindflow
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mindflow
+    username: postgres
+    password: password
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: 8080
+
+mindflow:
+  cors:
+    allowed-origins:
+      - http://localhost:5173
+  jwt:
+    secret: ${JWT_SECRET:change-this-secret-change-this-secret-change-this-secret}
+    expiration: ${JWT_EXPIRATION:PT12H}
+  xai:
+    base-url: ${XAI_BASE_URL:https://api.x.ai}
+    model: ${XAI_MODEL:grok-4-1-fast-reasoning}
+    api-key: ${XAI_API_KEY:}
+  gemini:
+    base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com}
+    model: ${GEMINI_EMBEDDING_MODEL:gemini-embedding-001}
+    api-key: ${GEMINI_API_KEY:}
+  chunking:
+    chunk-size: 1200
+    overlap: 200
+    retrieval-top-k: 5
