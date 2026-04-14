@@ -11,8 +11,8 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 
-@Component
-public class XaiClient {
+@Component("xaiClient")
+public class XaiClient implements AiChatClient {
     private final RestClient restClient;
     private final XaiProperties properties;
 
@@ -21,7 +21,8 @@ public class XaiClient {
         this.properties = properties;
     }
 
-    public String chat(List<Message> messages) {
+    @Override
+    public String chat(List<AiChatMessage> messages, AiChatOptions options) {
         if (!StringUtils.hasText(properties.apiKey())) {
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "XAI_API_KEY ontbreekt in de backend configuratie.");
         }
@@ -31,7 +32,10 @@ public class XaiClient {
             response = restClient.post()
                     .uri("/v1/chat/completions")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + properties.apiKey())
-                    .body(new ChatCompletionRequest(properties.model(), messages, 0.4))
+                    .body(new ChatCompletionRequest(
+                            properties.model(),
+                            messages,
+                            options.temperature() == null ? 0.4 : options.temperature()))
                     .retrieve()
                     .body(ChatCompletionResponse.class);
         } catch (RestClientResponseException exception) {
@@ -57,15 +61,12 @@ public class XaiClient {
         return fallback;
     }
 
-    public record Message(String role, String content) {
-    }
-
-    record ChatCompletionRequest(String model, List<Message> messages, Double temperature) {
+    record ChatCompletionRequest(String model, List<AiChatMessage> messages, Double temperature) {
     }
 
     record ChatCompletionResponse(List<Choice> choices) {
     }
 
-    record Choice(Message message) {
+    record Choice(AiChatMessage message) {
     }
 }

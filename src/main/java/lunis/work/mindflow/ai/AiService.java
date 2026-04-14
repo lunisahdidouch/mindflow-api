@@ -32,7 +32,10 @@ public class AiService {
     private static final String STUDY_SYSTEM_PROMPT =
             "Je bent een intelligente AI-studieassistent. Analyseer educatieve content en genereer gestructureerde studiematerialen in het Nederlands. Output mag ALTIJD alleen puur JSON zijn.";
 
-    private final XaiClient xaiClient;
+    private static final AiChatOptions STRUCTURED_CHAT = AiChatOptions.jsonMode(0.4);
+    private static final AiChatOptions STANDARD_CHAT = AiChatOptions.standard(0.4);
+
+    private final AiChatClient aiChatClient;
     private final ObjectMapper objectMapper;
     private final AiJsonSanitizer aiJsonSanitizer;
     private final UserService userService;
@@ -49,7 +52,7 @@ public class AiService {
     private final ChunkingProperties chunkingProperties;
 
     public AiService(
-            XaiClient xaiClient,
+            AiChatClient aiChatClient,
             ObjectMapper objectMapper,
             AiJsonSanitizer aiJsonSanitizer,
             UserService userService,
@@ -64,7 +67,7 @@ public class AiService {
             GeminiEmbeddingService embeddingService,
             StudySetService studySetService,
             ChunkingProperties chunkingProperties) {
-        this.xaiClient = xaiClient;
+        this.aiChatClient = aiChatClient;
         this.objectMapper = objectMapper;
         this.aiJsonSanitizer = aiJsonSanitizer;
         this.userService = userService;
@@ -98,9 +101,10 @@ public class AiService {
                 """.formatted(request.sourceName(), request.sourceType(), request.sourceText());
 
         GeneratedStudyMaterial generated = readJson(
-                xaiClient.chat(List.of(
-                        new XaiClient.Message("system", STUDY_SYSTEM_PROMPT),
-                        new XaiClient.Message("user", prompt))),
+                aiChatClient.chat(List.of(
+                        new AiChatMessage("system", STUDY_SYSTEM_PROMPT),
+                        new AiChatMessage("user", prompt)),
+                        STRUCTURED_CHAT),
                 GeneratedStudyMaterial.class);
 
         if (generated.flashcards() == null || generated.flashcards().isEmpty()) {
@@ -184,9 +188,10 @@ public class AiService {
                 """.formatted(request.focus(), questionCount, studySet.getOriginalContent());
 
         GeneratedPracticeTest generated = readJson(
-                xaiClient.chat(List.of(
-                        new XaiClient.Message("system", STUDY_SYSTEM_PROMPT),
-                        new XaiClient.Message("user", prompt))),
+                aiChatClient.chat(List.of(
+                        new AiChatMessage("system", STUDY_SYSTEM_PROMPT),
+                        new AiChatMessage("user", prompt)),
+                        STRUCTURED_CHAT),
                 GeneratedPracticeTest.class);
 
         PracticeTest test = new PracticeTest();
@@ -219,9 +224,10 @@ public class AiService {
                 """.formatted(sectionPairs, studySet.getOriginalContent());
 
         GeneratedLearningPlan generated = readJson(
-                xaiClient.chat(List.of(
-                        new XaiClient.Message("system", STUDY_SYSTEM_PROMPT),
-                        new XaiClient.Message("user", prompt))),
+                aiChatClient.chat(List.of(
+                        new AiChatMessage("system", STUDY_SYSTEM_PROMPT),
+                        new AiChatMessage("user", prompt)),
+                        STRUCTURED_CHAT),
                 GeneratedLearningPlan.class);
 
         LearningPlan plan = new LearningPlan();
@@ -247,9 +253,10 @@ public class AiService {
                 """.formatted(request.question(), request.modelAnswer(), request.studentAnswer());
 
         return readJson(
-                xaiClient.chat(List.of(
-                        new XaiClient.Message("system", STUDY_SYSTEM_PROMPT),
-                        new XaiClient.Message("user", prompt))),
+                aiChatClient.chat(List.of(
+                        new AiChatMessage("system", STUDY_SYSTEM_PROMPT),
+                        new AiChatMessage("user", prompt)),
+                        STRUCTURED_CHAT),
                 AiDtos.GradeQuestionResponse.class);
     }
 
@@ -272,17 +279,17 @@ public class AiService {
                 ? truncate(studySet.getOriginalContent(), 4000)
                 : contextChunks.stream().map(DocumentChunk::getContent).collect(Collectors.joining("\n\n"));
 
-        List<XaiClient.Message> messages = new ArrayList<>();
-        messages.add(new XaiClient.Message(
+        List<AiChatMessage> messages = new ArrayList<>();
+        messages.add(new AiChatMessage(
                 "system",
                 "Je bent een behulpzame AI-tutor die vragen beantwoordt over studiecontent in het Nederlands. Gebruik de volgende context: "
                         + context + " Wees behulpzaam en leg concepten eenvoudig uit."));
-        history.forEach(message -> messages.add(new XaiClient.Message(
+        history.forEach(message -> messages.add(new AiChatMessage(
                 "model".equals(message.getRole()) ? "assistant" : "user",
                 message.getContent())));
-        messages.add(new XaiClient.Message("user", request.message()));
+        messages.add(new AiChatMessage("user", request.message()));
 
-        String reply = xaiClient.chat(messages);
+        String reply = aiChatClient.chat(messages, STANDARD_CHAT);
 
         ChatMessage userMessage = new ChatMessage();
         userMessage.setStudySet(studySet);

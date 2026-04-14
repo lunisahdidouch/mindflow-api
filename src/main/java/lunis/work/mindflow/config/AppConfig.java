@@ -5,6 +5,7 @@ import org.springframework.boot.web.client.RestClientCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 
 @Configuration
@@ -13,6 +14,13 @@ public class AppConfig {
     @Bean
     RestClient xaiRestClient(RestClient.Builder builder, XaiProperties properties) {
         return builder.baseUrl(properties.baseUrl()).build();
+    }
+
+    @Bean
+    RestClient sambanovaRestClient(RestClient.Builder builder, SambanovaProperties properties) {
+        return StringUtils.hasText(properties.baseUrl())
+                ? builder.baseUrl(properties.baseUrl()).build()
+                : builder.build();
     }
 
     @Bean

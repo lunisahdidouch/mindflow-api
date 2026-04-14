@@ -22,6 +22,8 @@ server:
   port: 8080
 
 mindflow:
+  ai:
+    provider: ${MINDFLOW_AI_PROVIDER:sambanova}
   cors:
     allowed-origins:
       - http://localhost:5173
@@ -32,6 +34,10 @@ mindflow:
     base-url: ${XAI_BASE_URL:https://api.x.ai}
     model: ${XAI_MODEL:grok-4-1-fast-reasoning}
     api-key: ${XAI_API_KEY:}
+  sambanova:
+    base-url: ${SAMBANOVA_BASE_URL:}
+    model: ${SAMBANOVA_MODEL:MiniMax-M2.5}
+    api-key: ${SAMBANOVA_API_KEY:}
   gemini:
     base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com}
     model: ${GEMINI_EMBEDDING_MODEL:gemini-embedding-001}

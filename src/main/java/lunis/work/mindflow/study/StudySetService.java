@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import lunis.work.mindflow.common.ApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class StudySetService {
@@ -92,6 +93,12 @@ public class StudySetService {
                         message.getId(), message.getRole(), message.getContent(), message.getCreatedAt()))
                 .sorted(Comparator.comparing(StudyDtos.ChatMessageView::createdAt))
                 .toList();
+    }
+
+    @Transactional
+    public void deleteStudySet(Long studySetId, Long userId) {
+        StudySet studySet = getRequiredStudySet(studySetId, userId);
+        studySetRepository.delete(studySet);
     }
 
     public StudyDtos.StudySetBundle getBundle(Long studySetId, Long userId) {

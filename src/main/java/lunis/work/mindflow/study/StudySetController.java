@@ -3,6 +3,7 @@ package lunis.work.mindflow.study;
 import java.util.List;
 import lunis.work.mindflow.security.AuthenticatedUser;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -62,5 +63,12 @@ public class StudySetController {
             @PathVariable Long studySetId,
             @AuthenticationPrincipal AuthenticatedUser user) {
         return studySetService.getChatMessages(studySetId, user.id());
+    }
+
+    @DeleteMapping("/{studySetId}")
+    void deleteStudySet(
+            @PathVariable Long studySetId,
+            @AuthenticationPrincipal AuthenticatedUser user) {
+        studySetService.deleteStudySet(studySetId, user.id());
     }
 }
